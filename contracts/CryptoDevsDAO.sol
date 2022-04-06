@@ -50,6 +50,18 @@ contract CryptoDevsDAO is Ownable {
     _;
   }
 
+  modifier inactiveProposalOnly(uint256 proposalIndex) {
+    require(
+      proposals[proposalIndex].deadline <= block.timestamp,
+      "DEADLINE NOT EXCEEDED"
+    );
+    require(
+      proposals[proposalIndex].executed == false,
+      "PROPOSAL ALREADY EXECUTED"
+    );
+    _;
+  }
+
   function createProposal(uint256 _nftTokenId) external nftHolderOnly returns (uint256) {
     require(nftMarketplace.available(_nftTokenId), "NFT NOT FOR SALE");
     Proposal storage proposal = proposals[numProposals];
@@ -87,4 +99,23 @@ contract CryptoDevsDAO is Ownable {
       proposal.nayVotes += numVotes;
     }
   }
+
+  function executeProposal(uint256 proposalIndex) external nftHolderOnly inactiveProposalOnly(proposalIndex) {
+    Proposal storage proposal = proposals[proposalIndex];
+
+    if (proposal.yayVotes > proposal.nayVotes) {
+      uint256 nftPrice = nftMarketplace.getPrice();
+      require(address(this).balance >= nftPrice, "NOT ENOUGH FUNDS");
+      nftMarketplace.purchase{value: nftPrice}(proposal.nftTokenId);
+    }
+    proposal.executed = true;
+  }
+
+  function withdrawEther() external onlyOwner {
+    payable(owner()).transfer(address(this).balance);
+  }
+
+  receive() external payable {}
+
+  fallback() external payable {}
 }
