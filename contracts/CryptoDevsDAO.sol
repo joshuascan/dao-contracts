@@ -26,8 +26,14 @@ contract CryptoDevsDAO is Ownable {
     bool executed;
     mapping(uint256 => bool) voters;
   }
+
   mapping(uint256 => Proposal) public proposals;
   uint256 public numProposals;
+  
+  enum Vote {
+    YAY,
+    NAY
+  }
 
   IFakeNFTMarketplace nftMarketplace;
   ICryptoDevsNFT cryptoDevsNFT;
@@ -71,11 +77,6 @@ contract CryptoDevsDAO is Ownable {
     numProposals++;
 
     return numProposals - 1;
-  }
-
-  enum Vote {
-    YAY,
-    NAY
   }
 
   function voteOnProposal(uint256 proposalIndex, Vote vote) external nftHolderOnly activeProposalOnly(proposalIndex) {
